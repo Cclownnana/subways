@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Subway Runner</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body {
+  font-family: 'Fredoka', sans-serif;
+  background: linear-gradient(180deg, #6db8ff 0%, #b8e1ff 48%, #dff3ff 100%);
+  touch-action: none;
+}
+canvas { display: block; width: 100vw; height: 100vh; }
+#ui {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  color: #fff;
+}
+.topbar {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.hud {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.pill {
+  background: rgba(17, 23, 39, 0.58);
+  border: 1px solid rgba(255,255,255,0.15);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: 10px 14px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.distance {
+  min-width: 110px;
+  text-align: center;
+}
+.pause-btn, .jump-btn, .btn, .skin-btn, .tab {
+  pointer-events: auto;
+  cursor: pointer;
+  border: 0;
+  font-family: inherit;
+}
+.pause-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(17, 23, 39, 0.58);
+  color: #fff;
+  font-size: 22px;
+}
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(9, 14, 26, 0.74);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  pointer-events: auto;
+}
+.hidden { display: none !important; }
+.panel {
+  width: min(980px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  background: rgba(12, 18, 31, 0.92);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 28px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+  padding: 28px;
+}
+.title {
+  font-size: clamp(28px, 5vw, 50px);
+  font-weight: 700;
+  text-align: center;
+}
+.subtitle {
+  text-align: center;
+  margin-top: 8px;
+  color: rgba(255,255,255,0.78);
+  font-size: 16px;
+}
+.stats {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+.menu-actions, .shop-actions, .death-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+.btn {
+  padding: 14px 20px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #14b8a6, #0f766e);
+}
+.btn.secondary { background: linear-gradient(135deg, #64748b, #475569); }
+.btn.warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.btn.danger { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+.btn.paw { background: linear-gradient(135deg, #fb7185, #e11d48); }
+.section-title {
+  margin-top: 24px;
+  margin-bottom: 12px;
+  font-size: 20px;
+  font-weight: 700;
+}
+.skins-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+.play-preview-wrap {
+  width: min(420px, 100%);
+  height: 220px;
+  margin: 6px auto 0;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  overflow: hidden;
+}
+.play-preview-wrap canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.skin-card {
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
+  padding: 14px;
+  text-align: center;
+}
+.skin-card.selected { border-color: #facc15; background: rgba(250, 204, 21, 0.12); }
+.skin-card.owned { border-color: #14b8a6; }
+.skin-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 10px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  font-size: 34px;
+  background: rgba(255,255,255,0.08);
+}
+.skin-name { font-size: 14px; font-weight: 600; }
+.skin-price {
+  margin-top: 8px;
+  color: #fde68a;
+  font-size: 13px;
+}
+.skin-btn {
+  margin-top: 10px;
+  width: 100%;
+  border-radius: 12px;
+  padding: 10px;
+  background: #14b8a6;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+.shop-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.tab {
+  padding: 10px 14px;
+  border-radius: 12px;
+  color: #fff;
+  background: rgba(255,255,255,0.08);
+}
+.tab.active { background: #14b8a6; }
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+.shop-card {
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 18px;
+  padding: 16px;
+  text-align: center;
+}
+.shop-card h4 { font-size: 16px; }
+.shop-card p {
+  margin-top: 8px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.8);
+  min-height: 34px;
+}
+.shop-card .price {
+  margin-top: 10px;
+  color: #fde68a;
+  font-weight: 700;
+}
+.shield-indicator {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(37, 99, 235, 0.35);
+  border: 1px solid rgba(191,219,254,0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 18px;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+.jump-btn {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+  font-size: 28px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.22);
+}
+.hint {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 13px;
+  color: rgba(255,255,255,0.72);
+}
+@media (max-width: 720px) {
+  .panel { padding: 20px; border-radius: 22px; }
+  .jump-btn { width: 72px; height: 72px; font-size: 24px; }
+}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="ui">
+  <div class="topbar">
+    <div class="hud">
+      <div class="pill">🐾 <span id="paws">5</span></div>
+      <div class="pill">⭐ <span id="stars">50</span></div>
+      <div class="pill">🛡️ <span id="shields">0</span></div>
+      <div class="pill distance"><span id="distance">0m</span></div>
+    </div>
+    <button class="pause-btn" id="pauseBtn">⏸</button>
+  </div>
+
+  <div class="shield-indicator hidden" id="shieldIndicator">🛡️ Двойной тап активирует 1 щит</div>
+  <button class="jump-btn" id="jumpBtn">⬆</button>
+
+  <div class="overlay" id="menuScreen">
+    <div class="panel">
+      <div class="title">Бесконечный Раннер</div>
+      <div class="subtitle">3 полосы, поезд, препятствия, лапки, звезды, щит и ускорение</div>
+      <div class="stats">
+        <div class="pill">Рекорд: <span id="bestDistance">0</span>m</div>
+        <div class="pill">Ускорение: <span id="boostOwned">0</span></div>
+      </div>
+
+      <div class="section-title">Превью</div>
+      <div class="play-preview-wrap" id="playPreviewWrap"></div>
+
+      <div class="menu-actions">
+        <button class="btn" id="startBtn">Играть</button>
+        <button class="btn warning" id="shopBtn">Магазин</button>
+      </div>
+      <div class="hint">Управление: свайп влево/вправо, свайп вверх для прыжка, двойной тап для активации щита.</div>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="pauseScreen">
+    <div class="panel" style="max-width:560px;">
+      <div class="title">Пауза</div>
+      <div class="menu-actions">
+        <button class="btn" id="resumeBtn">Продолжить</button>
+        <button class="btn warning" id="pauseShopBtn">Магазин</button>
+        <button class="btn secondary" id="menuBtn">В меню</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="deathScreen">
+    <div class="panel" style="max-width:620px;">
+      <div class="title">Проигрыш</div>
+      <div class="subtitle" id="deathText">Ты пробежал 0 метров</div>
+      <div class="stats">
+        <div class="pill">Продолжение стоит: 🐾 <span id="continueCost">1</span></div>
+      </div>
+      <div class="death-actions">
+        <button class="btn paw" id="continueBtn">Продолжить</button>
+        <button class="btn" id="restartBtn">Заново</button>
+        <button class="btn secondary" id="deathMenuBtn">В меню</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="shopScreen">
+    <div class="panel">
+      <div class="shop-head">
+        <div>
+          <div class="title" style="text-align:left;font-size:34px;">Магазин</div>
+          <div class="subtitle" style="text-align:left;">Обычные скины за звезды, редкие за лапки</div>
+        </div>
+        <button class="btn secondary" id="closeShopBtn">Закрыть</button>
+      </div>
+
+      <div class="stats">
+        <div class="pill">🐾 <span id="shopPaws">0</span></div>
+        <div class="pill">⭐ <span id="shopStars">0</span></div>
+        <div class="pill">🛡️ <span id="shopShields">0</span></div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="normal">Обычные</button>
+        <button class="tab" data-tab="rare">Редкие</button>
+        <button class="tab" data-tab="items">Предметы</button>
+      </div>
+
+      <div class="shop-grid" id="shopGrid"></div>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const MODEL_URLS = {
+  paw: 'https://raw.githubusercontent.com/Cclownnana/subways/refs/heads/main/3d_cat_paw_obstacle.glb',
+  alien: 'https://raw.githubusercontent.com/Cclownnana/subways/refs/heads/main/cat_alien__gato_alien_meme_3d_model.glb',
+  hamster: 'https://raw.githubusercontent.com/Cclownnana/subways/refs/heads/main/cute_hamster.glb',
+  star: 'https://raw.githubusercontent.com/Cclownnana/subways/refs/heads/main/gold_star.glb',
+  hamster3: 'https://raw.githubusercontent.com/Cclownnana/subways/refs/heads/main/hamster_3.glb',
+  train: 'https://raw.githubusercontent.com/Cclownnana/subways/refs/heads/main/just_cheese.glb',
+  trees: 'https://raw.githubusercontent.com/Cclownnana/subways/refs/heads/main/maple_trees(1).glb',
+  obstacle: 'https://raw.githubusercontent.com/Cclownnana/subways/refs/heads/main/obstacle.glb',
+  manul: 'https://raw.githubusercontent.com/Cclownnana/subways/refs/heads/main/pallas_cat_box_manul.glb',
+  road: 'https://raw.githubusercontent.com/Cclownnana/subways/refs/heads/main/road__highway.glb',
+  treeAnim: 'https://raw.githubusercontent.com/Cclownnana/subways/refs/heads/main/tree_animate.glb'
+};
+
+const CHARACTERS = [
+  { id: 'alien', name: 'Кот-пришелец', icon: '👽', rare: false, price: 0 },
+  { id: 'hamster', name: 'Хомяк', icon: '🐹', rare: false, price: 20 },
+  { id: 'hamster3', name: 'Хомяк 3', icon: '🐭', rare: false, price: 45 },
+  { id: 'manul', name: 'Манул', icon: '🐱', rare: true, price: 3 }
+];
+
+const ITEM_DEFS = [
+  { id: 'boostStars', name: 'Ускорение', desc: 'Активируется перед началом игры и уносит далеко вперед.', price: 25, currency: 'stars', icon: '⚡' },
+  { id: 'boostPaws', name: 'Ускорение', desc: 'Та же сила, но покупка за редкую лапку.', price: 1, currency: 'paws', icon: '⚡' },
+  { id: 'shieldStars', name: 'Щит', desc: '1 щит. Активируется двойным тапом во время бега.', price: 25, currency: 'stars', icon: '🛡️' },
+  { id: 'shieldPaws', name: 'Щит', desc: '1 щит за лапку. Активируется двойным тапом.', price: 1, currency: 'paws', icon: '🛡️' }
+];
+
+const STORAGE_KEY = 'subway_runner_new_state_v1';
+const SAVE_DEFAULTS = {
+  stars: 50,
+  paws: 5,
+  shields: 0,
+  boosts: 0,
+  bestDistance: 0,
+  selectedChar: 'alien',
+  ownedChars: ['alien']
+};
+
+let save = loadSave();
+let scene, camera, renderer, loader;
+let player = null;
+let roadSegments = [];
+let sideTrees = [];
+let obstacles = [];
+let pickups = [];
+let loadedModels = new Map();
+
+let gameState = 'menu';
+let distance = 0;
+let continueCount = 0;
+let activeShield = false;
+let shieldTapWindow = 0;
+let pendingTapCount = 0;
+let boostRunning = false;
+let boostTimer = 0;
+let spawnTimer = 0;
+let obstaclePatternHistory = [];
+
+let laneIndex = 1;
+let targetLane = 1;
+let currentLaneX = 0;
+const laneWidth = 2.8; // ширина между 3 полосами по X
+const ROAD_SEGMENT_LENGTH = 34;
+const baseSpeed = 12;
+const boostSpeed = 28;
+
+const jumpState = {
+  active: false,
+  time: 0,
+  duration: 0.55,
+  height: 2.2
+};
+
+const ui = {
+  paws: document.getElementById('paws'),
+  stars: document.getElementById('stars'),
+  shields: document.getElementById('shields'),
+  distance: document.getElementById('distance'),
+  bestDistance: document.getElementById('bestDistance'),
+  boostOwned: document.getElementById('boostOwned'),
+  shopPaws: document.getElementById('shopPaws'),
+  shopStars: document.getElementById('shopStars'),
+  shopShields: document.getElementById('shopShields'),
+  menuScreen: document.getElementById('menuScreen'),
+  pauseScreen: document.getElementById('pauseScreen'),
+  deathScreen: document.getElementById('deathScreen'),
+  shopScreen: document.getElementById('shopScreen'),
+  shieldIndicator: document.getElementById('shieldIndicator'),
+  continueCost: document.getElementById('continueCost'),
+  deathText: document.getElementById('deathText'),
+  characterSelect: document.getElementById('characterSelect'),
+  shopGrid: document.getElementById('shopGrid')
+};
+
+let menuPreviewRenderer = null;
+let menuPreviewScene = null;
+let menuPreviewCamera = null;
+let menuPreviewModel = null;
+
+function ensureMenuPreview() {
+  const wrap = document.getElementById('playPreviewWrap');
+  if (!wrap) return false;
+  if (menuPreviewRenderer) return true;
+
+  menuPreviewScene = new THREE.Scene();
+  menuPreviewScene.fog = null;
+
+  menuPreviewCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+  menuPreviewCamera.position.set(0, 1.6, 4.2);
+  menuPreviewCamera.lookAt(0, 0.9, 0);
+
+  menuPreviewScene.add(new THREE.AmbientLight(0xffffff, 0.85));
+  const dir = new THREE.DirectionalLight(0xfff0cc, 0.95);
+  dir.position.set(2.5, 4, 1.5);
+  menuPreviewScene.add(dir);
+
+  menuPreviewRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  menuPreviewRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  wrap.appendChild(menuPreviewRenderer.domElement);
+  return true;
+}
+
+async function updateMenuPreview() {
+  const wrap = document.getElementById('playPreviewWrap');
+  if (!wrap) return;
+  if (!ensureMenuPreview()) return;
+
+  // Если превью вызывается из магазина, `menuScreen` может быть скрыт и размеры будут 0.
+  // Используем запасные размеры из CSS.
+  const w = Math.max(220, wrap.clientWidth || 420);
+  const h = Math.max(140, wrap.clientHeight || 220);
+  menuPreviewRenderer.setSize(w, h, false);
+
+  if (menuPreviewModel) {
+    menuPreviewScene.remove(menuPreviewModel);
+    menuPreviewModel = null;
+  }
+
+  const model = await getModel(save.selectedChar, 2.2);
+  model.rotation.set(0, 0, 0);
+  model.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(model);
+  model.position.y -= box.min.y; // нижняя точка на y=0
+
+  menuPreviewScene.add(model);
+  menuPreviewModel = model;
+  menuPreviewRenderer.render(menuPreviewScene, menuPreviewCamera);
+}
+
+function loadSave() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    return {
+      ...SAVE_DEFAULTS,
+      ...parsed,
+      ownedChars: Array.isArray(parsed.ownedChars) ? parsed.ownedChars : [...SAVE_DEFAULTS.ownedChars]
+    };
+  } catch {
+    return { ...SAVE_DEFAULTS };
+  }
+}
+
+function persist() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(save));
+}
+
+function updateHud() {
+  ui.paws.textContent = save.paws;
+  ui.stars.textContent = save.stars;
+  ui.shields.textContent = save.shields;
+  ui.distance.textContent = Math.floor(distance) + 'm';
+  ui.bestDistance.textContent = Math.floor(save.bestDistance);
+  ui.boostOwned.textContent = save.boosts;
+  ui.shopPaws.textContent = save.paws;
+  ui.shopStars.textContent = save.stars;
+  ui.shopShields.textContent = save.shields;
+  ui.shieldIndicator.classList.toggle('hidden', save.shields <= 0 && !activeShield);
+}
+
+function setScreen(name) {
+  ui.menuScreen.classList.add('hidden');
+  ui.pauseScreen.classList.add('hidden');
+  ui.deathScreen.classList.add('hidden');
+  ui.shopScreen.classList.add('hidden');
+  if (name === 'menu') ui.menuScreen.classList.remove('hidden');
+  if (name === 'pause') ui.pauseScreen.classList.remove('hidden');
+  if (name === 'death') ui.deathScreen.classList.remove('hidden');
+  if (name === 'shop') ui.shopScreen.classList.remove('hidden');
+}
+
+function currentSpeed() {
+  return boostRunning ? boostSpeed : baseSpeed;
+}
+
+function makeSun() {
+  const sunGeo = new THREE.CircleGeometry(3, 32);
+  const sunMat = new THREE.MeshBasicMaterial({ color: 0xfff4a3, transparent: true, opacity: 0.55 });
+  const sun = new THREE.Mesh(sunGeo, sunMat);
+  sun.position.set(28, 26, -70);
+  scene.add(sun);
+}
+
+function makeSky() {
+  const skyGeo = new THREE.SphereGeometry(160, 32, 16);
+  const skyMat = new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    uniforms: {
+      topColor: { value: new THREE.Color(0x63aef7) },
+      bottomColor: { value: new THREE.Color(0xe0f2ff) }
+    },
+    vertexShader: `
+      varying vec3 vPos;
+      void main() {
+        vPos = position;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vPos;
+      uniform vec3 topColor;
+      uniform vec3 bottomColor;
+      void main() {
+        float h = normalize(vPos).y * 0.5 + 0.5;
+        gl_FragColor = vec4(mix(bottomColor, topColor, pow(h, 1.2)), 1.0);
+      }
+    `
+  });
+  scene.add(new THREE.Mesh(skyGeo, skyMat));
+  makeSun();
+}
+
+function makeLights() {
+  scene.add(new THREE.AmbientLight(0xffffff, 0.78));
+  const dir = new THREE.DirectionalLight(0xfff6cc, 1.05);
+  dir.position.set(10, 18, 8);
+  scene.add(dir);
+  const fill = new THREE.DirectionalLight(0xaed8ff, 0.45);
+  fill.position.set(-8, 8, 5);
+  scene.add(fill);
+}
+
+function normalizeModel(model, targetSize = 2) {
+  const root = model.clone(true);
+  const box = new THREE.Box3().setFromObject(root);
+  const size = box.getSize(new THREE.Vector3());
+  const maxSide = Math.max(size.x, size.y, size.z) || 1;
+  const center = box.getCenter(new THREE.Vector3());
+  root.scale.setScalar(targetSize / maxSide);
+  root.position.sub(center.multiplyScalar(targetSize / maxSide));
+  return root;
+}
+
+async function getModel(key, targetSize = 2) {
+  if (!loadedModels.has(key)) {
+    const gltf = await loader.loadAsync(MODEL_URLS[key]);
+    loadedModels.set(key, gltf.scene);
+  }
+  return normalizeModel(loadedModels.get(key), targetSize);
+}
+
+async function createPlayer() {
+  if (player) scene.remove(player);
+  player = new THREE.Group();
+  const body = await getModel(save.selectedChar, 2.2);
+  player.add(body);
+  player.position.set(0, 0, 0);
+  scene.add(player);
+}
+
+function makeFallbackRoadSegment() {
+  const group = new THREE.Group();
+  const base = new THREE.Mesh(
+    new THREE.BoxGeometry(laneWidth * 2.9, 0.25, ROAD_SEGMENT_LENGTH),
+    new THREE.MeshLambertMaterial({ color: 0x3b3f4a })
+  );
+  group.add(base);
+  for (let x = -laneWidth; x <= laneWidth; x += laneWidth) {
+    const line = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12, 0.02, 20),
+      new THREE.MeshBasicMaterial({ color: 0xfcd34d })
+    );
+    line.position.set(x, 0.12, 0);
+    group.add(line);
+  }
+  return group;
+}
+
+async function addRoadSegment(z) {
+  const seg = new THREE.Group();
+  let road;
+  try {
+    road = await getModel('road', 24);
+  } catch {
+    road = makeFallbackRoadSegment();
+  }
+  road.rotation.y = Math.PI;
+  road.position.y = -0.02;
+  seg.add(road);
+  seg.position.z = z;
+  scene.add(seg);
+  roadSegments.push(seg);
+}
+
+function clearArrayMeshes(arr) {
+  arr.forEach(item => scene.remove(item));
+  arr.length = 0;
+}
+
+async function createRoad() {
+  clearArrayMeshes(roadSegments);
+  for (let i = 0; i < 6; i++) {
+    await addRoadSegment(-i * ROAD_SEGMENT_LENGTH);
+  }
+}
+
+async function spawnTree(side, z) {
+  const key = Math.random() > 0.5 ? 'trees' : 'treeAnim';
+  let tree;
+  try {
+    tree = await getModel(key, 3.6 + Math.random());
+  } catch {
+    tree = new THREE.Mesh(
+      new THREE.ConeGeometry(1.2, 3, 8),
+      new THREE.MeshLambertMaterial({ color: 0x2f855a })
+    );
+  }
+  const holder = new THREE.Group();
+  holder.add(tree);
+  holder.rotation.y = Math.PI / 2; // повернуть на 90°
+  holder.position.set(side * (5.5 + Math.random() * 1.2), 0, z);
+
+  // Увеличиваем в 8 раз и "ставим" на землю (низ модели y=0)
+  tree.scale.multiplyScalar(8);
+  holder.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(tree);
+  tree.position.y -= box.min.y;
+  tree.position.y -= 0.02; // чуть ниже, чем y=0 у дороги
+
+  scene.add(holder);
+  sideTrees.push(holder);
+}
+
+async function createTrees() {
+  clearArrayMeshes(sideTrees);
+  for (let i = 0; i < 16; i++) {
+    await spawnTree(-1, -i * 14);
+    await spawnTree(1, -i * 14 - 8);
+  }
+}
+
+function laneToX(lane) {
+  return (lane - 1) * laneWidth;
+}
+
+function addObstacleMesh(isTrain) {
+  const group = new THREE.Group();
+  const material = new THREE.MeshLambertMaterial({ color: isTrain ? 0x8b5cf6 : 0xef4444 });
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(isTrain ? 1.7 : 1.5, isTrain ? 2.0 : 1.2, isTrain ? 5.8 : 1.4),
+    material
+  );
+  mesh.position.y = isTrain ? 1.0 : 0.6;
+  group.add(mesh);
+  return group;
+}
+
+async function spawnObstacle(type, lane, z) {
+  const holder = new THREE.Group();
+  let visual;
+  try {
+    visual = await getModel(type === 'train' ? 'train' : 'obstacle', type === 'train' ? 3.8 : 2.2);
+  } catch {
+    visual = addObstacleMesh(type === 'train');
+  }
+  if (type === 'train') {
+    visual.position.y = 0.9;
+    visual.scale.z *= 1.4;
+    visual.scale.multiplyScalar(0.85); // немного уменьшить поезд
+  } else {
+    visual.position.y = 0.35;
+  }
+  holder.add(visual);
+  holder.position.set(laneToX(lane), 0, z);
+  holder.userData = {
+    kind: type,
+    lane,
+    width: 1.25,
+    depth: type === 'train' ? 3.4 : 1.1,
+    cleared: false
+  };
+  scene.add(holder);
+  obstacles.push(holder);
+}
+
+async function spawnPickup(kind, lane, z) {
+  const holder = new THREE.Group();
+  let visual;
+  try {
+    visual = await getModel(kind === 'paw' ? 'paw' : 'star', 1.2);
+  } catch {
+    visual = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(0.55, 0),
+      new THREE.MeshLambertMaterial({ color: kind === 'paw' ? 0xfb7185 : 0xfacc15 })
+    );
+  }
+  visual.position.y = 1.1;
+  holder.add(visual);
+  holder.position.set(laneToX(lane), 0, z);
+  holder.userData = { kind, lane, cleared: false };
+  scene.add(holder);
+  pickups.push(holder);
+}
+
+function nextPattern() {
+  const patterns = [
+    [{ type: 'small', lane: 0 }],
+    [{ type: 'small', lane: 2 }],
+    [{ type: 'train', lane: 1 }],
+    [{ type: 'small', lane: 0 }, { type: 'small', lane: 2 }],
+    [{ type: 'train', lane: 0 }],
+    [{ type: 'train', lane: 2 }],
+    [{ type: 'small', lane: 1 }]
+  ];
+  let candidate = Math.floor(Math.random() * patterns.length);
+  while (obstaclePatternHistory.includes(candidate)) {
+    candidate = Math.floor(Math.random() * patterns.length);
+  }
+  obstaclePatternHistory.push(candidate);
+  if (obstaclePatternHistory.length > 2) obstaclePatternHistory.shift();
+  return patterns[candidate];
+}
+
+async function spawnSet() {
+  const z = -70;
+  const pattern = nextPattern();
+  for (const item of pattern) {
+    await spawnObstacle(item.type === 'train' ? 'train' : 'small', item.lane, z);
+  }
+
+  const freeLanes = [0, 1, 2].filter(lane => !pattern.some(p => p.lane === lane && p.type === 'train'));
+  for (const lane of freeLanes) {
+    if (Math.random() < 0.62) await spawnPickup('star', lane, z - 6 - Math.random() * 4);
+    if (Math.random() < 0.14) await spawnPickup('paw', lane, z - 10 - Math.random() * 4);
+  }
+}
+
+function resetRunValues() {
+  distance = 0;
+  continueCount = 0;
+  activeShield = false;
+  shieldTapWindow = 0;
+  pendingTapCount = 0;
+  boostRunning = false;
+  boostTimer = 0;
+  spawnTimer = 0;
+  laneIndex = 1;
+  targetLane = 1;
+  currentLaneX = 0;
+  jumpState.active = false;
+  jumpState.time = 0;
+  obstaclePatternHistory = [];
+  clearArrayMeshes(obstacles);
+  clearArrayMeshes(pickups);
+}
+
+function startRun() {
+  resetRunValues();
+  if (save.boosts > 0) {
+    save.boosts -= 1;
+    boostRunning = true;
+    boostTimer = 8;
+    persist();
+  }
+  if (player) {
+    player.position.set(0, 0, 0);
+    player.rotation.set(0, 0, 0);
+  }
+  gameState = 'playing';
+  setScreen('none');
+  updateHud();
+}
+
+function gameOver() {
+  gameState = 'death';
+  save.bestDistance = Math.max(save.bestDistance, Math.floor(distance));
+  persist();
+  ui.deathText.textContent = 'Ты пробежал ' + Math.floor(distance) + ' метров';
+  ui.continueCost.textContent = String(continueCount + 1);
+  setScreen('death');
+  updateHud();
+}
+
+function continueRun() {
+  const cost = continueCount + 1;
+  if (save.paws < cost) return;
+  save.paws -= cost;
+  continueCount += 1;
+  activeShield = false;
+  pendingTapCount = 0;
+  shieldTapWindow = 0;
+  clearArrayMeshes(obstacles);
+  clearArrayMeshes(pickups);
+  gameState = 'playing';
+  setScreen('none');
+  persist();
+  updateHud();
+}
+
+function backToMenu() {
+  gameState = 'menu';
+  setScreen('menu');
+  updateHud();
+}
+
+function pauseGame() {
+  if (gameState !== 'playing') return;
+  gameState = 'paused';
+  setScreen('pause');
+}
+
+function resumeGame() {
+  if (gameState !== 'paused') return;
+  gameState = 'playing';
+  setScreen('none');
+}
+
+function moveLeft() {
+  if (gameState !== 'playing') return;
+  targetLane = Math.max(0, targetLane - 1);
+}
+
+function moveRight() {
+  if (gameState !== 'playing') return;
+  targetLane = Math.min(2, targetLane + 1);
+}
+
+function jump() {
+  if (gameState !== 'playing') return;
+  if (jumpState.active) return;
+  jumpState.active = true;
+  jumpState.time = 0;
+}
+
+function registerTap() {
+  if (gameState !== 'playing') return;
+  pendingTapCount += 1;
+  shieldTapWindow = 0.32;
+  if (pendingTapCount >= 2) {
+    pendingTapCount = 0;
+    shieldTapWindow = 0;
+    if (!activeShield && save.shields > 0) {
+      save.shields -= 1;
+      activeShield = true;
+      persist();
+      updateHud();
+      ui.shieldIndicator.textContent = '🛡️ Щит активен';
+      ui.shieldIndicator.classList.remove('hidden');
+    }
+  }
+}
+
+function consumeShield() {
+  activeShield = false;
+  ui.shieldIndicator.textContent = '🛡️ Двойной тап активирует 1 щит';
+  ui.shieldIndicator.classList.toggle('hidden', save.shields <= 0);
+}
+
+function intersectsObstacle(obs) {
+  const playerX = currentLaneX;
+  const closeZ = Math.abs(obs.position.z) < obs.userData.depth;
+  const closeX = Math.abs(obs.position.x - playerX) < obs.userData.width;
+  if (!closeZ || !closeX) return false;
+
+  if (obs.userData.kind === 'small') {
+    return player.position.y < 1.0;
+  }
+
+  if (obs.userData.kind === 'train') {
+    // Поезд нельзя перепрыгнуть: столкновение засчитывается всегда.
+    return true;
+  }
+
+  return true;
+}
+
+function handleCollisions() {
+  for (const obs of obstacles) {
+    if (obs.userData.cleared) continue;
+    if (intersectsObstacle(obs)) {
+      obs.userData.cleared = true;
+      scene.remove(obs);
+      if (activeShield) {
+        consumeShield();
+      } else {
+        gameOver();
+        return;
+      }
+    }
+  }
+
+  for (const item of pickups) {
+    if (item.userData.cleared) continue;
+    const closeZ = Math.abs(item.position.z) < 1.2;
+    const closeX = Math.abs(item.position.x - currentLaneX) < 1.0;
+    if (closeZ && closeX) {
+      item.userData.cleared = true;
+      scene.remove(item);
+      if (item.userData.kind === 'paw') save.paws += 1;
+      if (item.userData.kind === 'star') save.stars += 1;
+      persist();
+      updateHud();
+    }
+  }
+
+  obstacles = obstacles.filter(o => !o.userData.cleared);
+  pickups = pickups.filter(p => !p.userData.cleared);
+}
+
+function updateMovement(dt) {
+  if (!player) return;
+
+  const targetX = laneToX(targetLane);
+  currentLaneX += (targetX - currentLaneX) * Math.min(1, dt * 12);
+  laneIndex = Math.round(targetLane);
+  player.position.x = currentLaneX;
+
+  if (jumpState.active) {
+    jumpState.time += dt;
+    const t = Math.min(1, jumpState.time / jumpState.duration);
+    player.position.y = Math.sin(t * Math.PI) * jumpState.height;
+    if (t >= 1) {
+      jumpState.active = false;
+      player.position.y = 0;
+    }
+  }
+}
+
+function updateWorld(dt) {
+  const speed = currentSpeed();
+  distance += dt * speed;
+  save.bestDistance = Math.max(save.bestDistance, Math.floor(distance));
+
+  if (boostRunning) {
+    boostTimer -= dt;
+    if (boostTimer <= 0) boostRunning = false;
+  }
+
+  for (const seg of roadSegments) {
+    seg.position.z += dt * speed;
+    if (seg.position.z > ROAD_SEGMENT_LENGTH) seg.position.z -= ROAD_SEGMENT_LENGTH * roadSegments.length;
+  }
+
+  for (const tree of sideTrees) {
+    tree.position.z += dt * speed;
+    if (tree.position.z > 20) tree.position.z -= 220;
+  }
+
+  for (const obs of obstacles) {
+    obs.position.z += dt * speed;
+    if (obs.position.z > 8) {
+      obs.userData.cleared = true;
+      scene.remove(obs);
+    }
+  }
+
+  for (const item of pickups) {
+    item.position.z += dt * speed;
+    item.rotation.y += dt * 4;
+    if (item.position.z > 6) {
+      item.userData.cleared = true;
+      scene.remove(item);
+    }
+  }
+
+  obstacles = obstacles.filter(o => !o.userData.cleared);
+  pickups = pickups.filter(p => !p.userData.cleared);
+
+  spawnTimer += dt;
+  if (spawnTimer >= 1.1) {
+    spawnTimer = 0;
+    spawnSet();
+  }
+
+  if (shieldTapWindow > 0) {
+    shieldTapWindow -= dt;
+    if (shieldTapWindow <= 0) pendingTapCount = 0;
+  }
+
+  updateHud();
+}
+
+function renderCharacterCards() {
+  if (!ui.characterSelect) return;
+  ui.characterSelect.innerHTML = '';
+  for (const char of CHARACTERS) {
+    const owned = save.ownedChars.includes(char.id);
+    const selected = save.selectedChar === char.id;
+    const card = document.createElement('div');
+    card.className = 'skin-card' + (owned ? ' owned' : '') + (selected ? ' selected' : '');
+    card.innerHTML = `
+      <div class="skin-icon">${char.icon}</div>
+      <div class="skin-name">${char.name}</div>
+      <div class="skin-price">${char.price === 0 ? 'Бесплатно' : (char.rare ? '🐾 ' + char.price : '⭐ ' + char.price)}</div>
+      <button class="skin-btn">${!owned ? 'Купить' : (selected ? 'Выбрано' : 'Выбрать')}</button>
+    `;
+    card.querySelector('button').onclick = async () => {
+      if (!owned) {
+        if (char.rare) {
+          if (save.paws < char.price) return;
+          save.paws -= char.price;
+        } else {
+          if (save.stars < char.price) return;
+          save.stars -= char.price;
+        }
+        save.ownedChars.push(char.id);
+      }
+      save.selectedChar = char.id;
+      persist();
+      updateHud();
+      renderShop(activeTab);
+      await createPlayer();
+      await updateMenuPreview();
+    };
+    ui.characterSelect.appendChild(card);
+  }
+}
+
+let activeTab = 'normal';
+function renderShop(tab = activeTab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.dataset.tab === tab));
+  ui.shopGrid.innerHTML = '';
+
+  if (tab === 'items') {
+    for (const item of ITEM_DEFS) {
+      const card = document.createElement('div');
+      card.className = 'shop-card';
+      card.innerHTML = `
+        <div class="skin-icon">${item.icon}</div>
+        <h4>${item.name}</h4>
+        <p>${item.desc}</p>
+        <div class="price">${item.currency === 'stars' ? '⭐' : '🐾'} ${item.price}</div>
+        <button class="skin-btn">Купить</button>
+      `;
+      card.querySelector('button').onclick = () => {
+        if (save[item.currency] < item.price) return;
+        save[item.currency] -= item.price;
+        if (item.id.startsWith('shield')) save.shields += 1;
+        if (item.id.startsWith('boost')) save.boosts += 1;
+        persist();
+        updateHud();
+        renderShop(tab);
+      };
+      ui.shopGrid.appendChild(card);
+    }
+    return;
+  }
+
+  for (const char of CHARACTERS.filter(c => (tab === 'rare') === c.rare)) {
+    const owned = save.ownedChars.includes(char.id);
+    const selected = save.selectedChar === char.id;
+    const card = document.createElement('div');
+    card.className = 'shop-card' + (owned ? ' owned' : '') + (selected ? ' selected' : '');
+    card.innerHTML = `
+      <div class="skin-icon">${char.icon}</div>
+      <h4>${char.name}</h4>
+      <p>${char.rare ? 'Редкий персонаж за лапки.' : 'Обычный персонаж за звезды.'}</p>
+      <div class="price">${char.price === 0 ? 'Бесплатно' : (char.rare ? '🐾 ' + char.price : '⭐ ' + char.price)}</div>
+      <button class="skin-btn">${!owned ? 'Купить' : (selected ? 'Выбрано' : 'Выбрать')}</button>
+    `;
+    card.querySelector('button').onclick = async () => {
+      if (!owned) {
+        if (char.rare) {
+          if (save.paws < char.price) return;
+          save.paws -= char.price;
+        } else {
+          if (save.stars < char.price) return;
+          save.stars -= char.price;
+        }
+        save.ownedChars.push(char.id);
+      }
+      save.selectedChar = char.id;
+      persist();
+      updateHud();
+      renderShop(tab);
+      await createPlayer();
+      await updateMenuPreview();
+    };
+    ui.shopGrid.appendChild(card);
+  }
+}
+
+function openShop() {
+  setScreen('shop');
+  renderShop(activeTab);
+  updateHud();
+}
+
+function closeShop() {
+  setScreen(gameState === 'paused' ? 'pause' : 'menu');
+}
+
+function setupEvents() {
+  document.getElementById('startBtn').onclick = startRun;
+  document.getElementById('shopBtn').onclick = openShop;
+  document.getElementById('pauseShopBtn').onclick = openShop;
+  document.getElementById('closeShopBtn').onclick = closeShop;
+  document.getElementById('pauseBtn').onclick = pauseGame;
+  document.getElementById('resumeBtn').onclick = resumeGame;
+  document.getElementById('menuBtn').onclick = backToMenu;
+  document.getElementById('deathMenuBtn').onclick = backToMenu;
+  document.getElementById('restartBtn').onclick = startRun;
+  document.getElementById('continueBtn').onclick = continueRun;
+  document.getElementById('jumpBtn').onclick = jump;
+
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => renderShop(tab.dataset.tab));
+  });
+
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchMoved = false;
+
+  document.addEventListener('touchstart', e => {
+    if (!e.touches[0]) return;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchMoved = false;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', () => {
+    touchMoved = true;
+  }, { passive: true });
+
+  document.addEventListener('touchend', e => {
+    if (gameState !== 'playing') return;
+    const touch = e.changedTouches[0];
+    if (!touch) return;
+    const dx = touch.clientX - touchStartX;
+    const dy = touch.clientY - touchStartY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 28) {
+      if (dx > 0) moveRight();
+      else moveLeft();
+      return;
+    }
+    if (dy < -28) {
+      jump();
+      return;
+    }
+    if (!touchMoved || (Math.abs(dx) < 10 && Math.abs(dy) < 10)) {
+      registerTap();
+    }
+  }, { passive: true });
+
+  let lastClickAt = 0;
+  document.addEventListener('click', e => {
+    if (gameState !== 'playing') return;
+    if (e.target.closest('button')) return;
+    const now = performance.now();
+    if (now - lastClickAt < 320) registerTap();
+    lastClickAt = now;
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') moveLeft();
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') moveRight();
+    if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') jump();
+    if (e.key === 'Escape') {
+      if (gameState === 'playing') pauseGame();
+      else if (gameState === 'paused') resumeGame();
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    // подстроить превью выбранного персонажа
+    const wrap = document.getElementById('playPreviewWrap');
+    if (menuPreviewRenderer && wrap) {
+      menuPreviewRenderer.setSize(Math.max(1, wrap.clientWidth), Math.max(1, wrap.clientHeight), false);
+      if (menuPreviewScene && menuPreviewCamera) menuPreviewRenderer.render(menuPreviewScene, menuPreviewCamera);
+    }
+  });
+}
+
+function animateCamera() {
+  if (!player) return;
+  const target = new THREE.Vector3(player.position.x, player.position.y + 1.6, player.position.z - 8);
+  camera.position.lerp(new THREE.Vector3(target.x, 4.1, 7.6), 0.08);
+  camera.lookAt(player.position.x, player.position.y + 1.1, -6);
+}
+
+let lastTime = 0;
+function animate(time = 0) {
+  requestAnimationFrame(animate);
+  const dt = Math.min((time - lastTime) / 1000, 0.05);
+  lastTime = time;
+
+  if (gameState === 'playing') {
+    updateMovement(dt);
+    updateWorld(dt);
+    handleCollisions();
+  }
+
+  animateCamera();
+  renderer.render(scene, camera);
+}
+
+async function init() {
+  const canvas = document.getElementById('game');
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.setClearColor(0x93d5ff);
+
+  scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0xbfe7ff, 35, 95);
+  camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 200);
+  camera.position.set(0, 4.1, 7.6);
+  loader = new GLTFLoader();
+
+  makeSky();
+  makeLights();
+  await createPlayer();
+  await createRoad();
+  await createTrees();
+
+  renderShop('normal');
+  updateHud();
+  setupEvents();
+  setScreen('menu');
+  await updateMenuPreview();
+  animate();
+}
+
+init();
+</script>
+</body>
+</html>
