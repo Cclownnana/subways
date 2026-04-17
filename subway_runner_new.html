@@ -77,16 +77,18 @@ canvas { display: block; width: 100vw; height: 100vh; }
   width: min(980px, 100%);
   max-height: 100%;
   overflow: auto;
-  background: rgba(12, 18, 31, 0.92);
-  border: 1px solid rgba(255,255,255,0.14);
+  background: linear-gradient(165deg, rgba(10, 18, 34, 0.94), rgba(20, 29, 52, 0.9));
+  border: 1px solid rgba(255,255,255,0.2);
   border-radius: 28px;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+  box-shadow: 0 24px 70px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.15), 0 0 35px rgba(59,130,246,0.18);
   padding: 28px;
 }
 .title {
   font-size: clamp(28px, 5vw, 50px);
   font-weight: 700;
   text-align: center;
+  letter-spacing: 0.3px;
+  text-shadow: 0 4px 18px rgba(59,130,246,0.35);
 }
 .subtitle {
   text-align: center;
@@ -115,6 +117,13 @@ canvas { display: block; width: 100vw; height: 100vh; }
   font-weight: 700;
   color: #fff;
   background: linear-gradient(135deg, #14b8a6, #0f766e);
+  transition: transform 0.15s ease, filter 0.15s ease;
+  box-shadow: 0 0 0 rgba(20,184,166,0), 0 8px 22px rgba(0,0,0,0.22);
+}
+.btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  box-shadow: 0 0 16px rgba(45,212,191,0.55), 0 8px 22px rgba(0,0,0,0.24);
 }
 .btn.secondary { background: linear-gradient(135deg, #64748b, #475569); }
 .btn.warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
@@ -153,6 +162,7 @@ canvas { display: block; width: 100vw; height: 100vh; }
   text-align: center;
 }
 .skin-card.selected { border-color: #facc15; background: rgba(250, 204, 21, 0.12); }
+.skin-card.selected { box-shadow: 0 0 20px rgba(250, 204, 21, 0.45); }
 .skin-card.owned { border-color: #14b8a6; }
 .skin-icon {
   width: 72px;
@@ -197,8 +207,13 @@ canvas { display: block; width: 100vw; height: 100vh; }
   border-radius: 12px;
   color: #fff;
   background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  transition: all 0.18s ease;
 }
-.tab.active { background: #14b8a6; }
+.tab.active {
+  background: linear-gradient(135deg, #14b8a6, #0ea5e9);
+  box-shadow: 0 0 16px rgba(20,184,166,0.55);
+}
 .shop-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -206,11 +221,18 @@ canvas { display: block; width: 100vw; height: 100vh; }
   margin-top: 18px;
 }
 .shop-card {
-  background: rgba(255,255,255,0.06);
-  border: 2px solid rgba(255,255,255,0.1);
+  background: linear-gradient(155deg, rgba(255,255,255,0.11), rgba(255,255,255,0.04));
+  border: 2px solid rgba(255,255,255,0.14);
   border-radius: 18px;
   padding: 16px;
   text-align: center;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.22);
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+.shop-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(250, 204, 21, 0.55);
+  box-shadow: 0 0 18px rgba(14,165,233,0.35), 0 10px 28px rgba(0,0,0,0.25);
 }
 .shop-card h4 { font-size: 16px; }
 .shop-card p {
@@ -231,6 +253,18 @@ canvas { display: block; width: 100vw; height: 100vh; }
   transform: translateX(-50%);
   background: rgba(37, 99, 235, 0.35);
   border: 1px solid rgba(191,219,254,0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 18px;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+.status-indicator {
+  position: absolute;
+  bottom: 74px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(17, 24, 39, 0.5);
+  border: 1px solid rgba(255,255,255,0.35);
   backdrop-filter: blur(10px);
   border-radius: 18px;
   padding: 10px 16px;
@@ -274,7 +308,8 @@ canvas { display: block; width: 100vw; height: 100vh; }
     <button class="pause-btn" id="pauseBtn">⏸</button>
   </div>
 
-  <div class="shield-indicator hidden" id="shieldIndicator">🛡️ Двойной тап активирует 1 щит</div>
+  <div class="shield-indicator hidden" id="shieldIndicator">🛡️ Нажми стрелку вниз для активации щита</div>
+  <div class="status-indicator hidden" id="statusIndicator"></div>
   <button class="jump-btn" id="jumpBtn">⬆</button>
 
   <div class="overlay" id="menuScreen">
@@ -286,14 +321,13 @@ canvas { display: block; width: 100vw; height: 100vh; }
         <div class="pill">Ускорение: <span id="boostOwned">0</span></div>
       </div>
 
-      <div class="section-title">Превью</div>
       <div class="play-preview-wrap" id="playPreviewWrap"></div>
 
       <div class="menu-actions">
         <button class="btn" id="startBtn">Играть</button>
         <button class="btn warning" id="shopBtn">Магазин</button>
       </div>
-      <div class="hint">Управление: свайп влево/вправо, свайп вверх для прыжка, двойной тап для активации щита.</div>
+      <div class="hint">Управление: свайп влево/вправо, свайп вверх для прыжка, стрелка вниз для активации щита.</div>
     </div>
   </div>
 
@@ -386,8 +420,8 @@ const CHARACTERS = [
 const ITEM_DEFS = [
   { id: 'boostStars', name: 'Ускорение', desc: 'Активируется перед началом игры и уносит далеко вперед.', price: 25, currency: 'stars', icon: '⚡' },
   { id: 'boostPaws', name: 'Ускорение', desc: 'Та же сила, но покупка за редкую лапку.', price: 1, currency: 'paws', icon: '⚡' },
-  { id: 'shieldStars', name: 'Щит', desc: '1 щит. Активируется двойным тапом во время бега.', price: 25, currency: 'stars', icon: '🛡️' },
-  { id: 'shieldPaws', name: 'Щит', desc: '1 щит за лапку. Активируется двойным тапом.', price: 1, currency: 'paws', icon: '🛡️' }
+  { id: 'shieldStars', name: 'Щит', desc: '1 щит. Активируется стрелкой вниз во время бега.', price: 25, currency: 'stars', icon: '🛡️' },
+  { id: 'shieldPaws', name: 'Щит', desc: '1 щит за лапку. Активируется стрелкой вниз.', price: 1, currency: 'paws', icon: '🛡️' }
 ];
 
 const STORAGE_KEY = 'subway_runner_new_state_v1';
@@ -406,16 +440,17 @@ let scene, camera, renderer, loader;
 let player = null;
 let roadSegments = [];
 let sideTrees = [];
+let clouds = [];
 let obstacles = [];
 let pickups = [];
 let loadedModels = new Map();
 
 let gameState = 'menu';
 let distance = 0;
+let runElapsed = 0;
 let continueCount = 0;
 let activeShield = false;
-let shieldTapWindow = 0;
-let pendingTapCount = 0;
+let shieldTimer = 0;
 let boostRunning = false;
 let boostTimer = 0;
 let spawnTimer = 0;
@@ -424,10 +459,24 @@ let obstaclePatternHistory = [];
 let laneIndex = 1;
 let targetLane = 1;
 let currentLaneX = 0;
-const laneWidth = 2.8; // ширина между 3 полосами по X
+const laneWidth = 3.6; // сильно увеличенная ширина полосы
 const ROAD_SEGMENT_LENGTH = 34;
+const ROAD_MODEL_SIZE = 120;
+const USE_SIMPLE_ROAD = true; // простая геометрия работает заметно быстрее
+const TREE_SPACING_Z = 100;
+const TREE_ROW_COUNT = 7;
+const TREE_LOOP_LENGTH = TREE_SPACING_Z * TREE_ROW_COUNT;
+const CLOUD_LOOP_LENGTH = 760;
 const baseSpeed = 12;
 const boostSpeed = 28;
+const CHARACTER_FORWARD_ROTATION = Math.PI;
+const PLAYER_GROUND_Y = 0.7; // еще чуть выше
+
+const runAnim = {
+  phase: 0,
+  tiltAmp: 0.08,
+  swayAmp: 0.14
+};
 
 const jumpState = {
   active: false,
@@ -435,6 +484,10 @@ const jumpState = {
   duration: 0.55,
   height: 2.2
 };
+
+const PHONK_URL = 'https://cdn.pixabay.com/download/audio/2023/10/25/audio_90f2f57f4e.mp3?filename=aggressive-phonk-176771.mp3';
+let bgMusic = null;
+let bgMusicReady = false;
 
 const ui = {
   paws: document.getElementById('paws'),
@@ -451,6 +504,7 @@ const ui = {
   deathScreen: document.getElementById('deathScreen'),
   shopScreen: document.getElementById('shopScreen'),
   shieldIndicator: document.getElementById('shieldIndicator'),
+  statusIndicator: document.getElementById('statusIndicator'),
   continueCost: document.getElementById('continueCost'),
   deathText: document.getElementById('deathText'),
   characterSelect: document.getElementById('characterSelect'),
@@ -461,6 +515,124 @@ let menuPreviewRenderer = null;
 let menuPreviewScene = null;
 let menuPreviewCamera = null;
 let menuPreviewModel = null;
+let hudUpdateTimer = 0;
+let playerBody = null;
+let runRig = null;
+let boneRig = null;
+const deathAnim = { active: false, time: 0, duration: 0.65, startY: 0 };
+
+function getCharacterRotation(charId) {
+  // Хомяк 1: разворот на 180 градусов относительно базового направления.
+  return CHARACTER_FORWARD_ROTATION + (charId === 'hamster' ? Math.PI : 0);
+}
+
+function getCharacterHeightOffset(charId) {
+  // Чуть приподнять только пришельца.
+  return charId === 'alien' ? 0.18 : 0;
+}
+
+function classifyLimb(name = '') {
+  const n = name.toLowerCase();
+  const isLeft = /left|_l\b|\.l\b|\bl\b|izq/.test(n);
+  const isRight = /right|_r\b|\.r\b|\br\b|der/.test(n);
+  const side = isLeft ? 'left' : (isRight ? 'right' : null);
+  if (/arm|hand|shoulder|forearm|upperarm/.test(n)) return side ? `arm_${side}` : null;
+  if (/leg|thigh|calf|foot|shin/.test(n)) return side ? `leg_${side}` : null;
+  return null;
+}
+
+function buildRunRig(modelRoot) {
+  const rig = { arm_left: null, arm_right: null, leg_left: null, leg_right: null, fallbackParts: [] };
+  modelRoot.traverse(node => {
+    const limb = classifyLimb(node.name || '');
+    if (limb && !rig[limb]) {
+      rig[limb] = {
+        node,
+        baseX: node.rotation.x,
+        baseY: node.rotation.y,
+        baseZ: node.rotation.z
+      };
+    }
+    if (node.isMesh) {
+      const isSmallPart = node.parent && node.parent !== modelRoot;
+      if (isSmallPart && rig.fallbackParts.length < 18) {
+        rig.fallbackParts.push({
+          node,
+          baseX: node.rotation.x,
+          baseY: node.rotation.y,
+          baseZ: node.rotation.z,
+          side: node.position.x >= 0 ? 1 : -1
+        });
+      }
+    }
+  });
+  return rig;
+}
+
+function buildBoneRig(modelRoot) {
+  const rig = { arm_left: null, arm_right: null, leg_left: null, leg_right: null };
+  modelRoot.traverse(node => {
+    if (!node.isBone) return;
+    const limb = classifyLimb(node.name || '');
+    if (limb && !rig[limb]) {
+      rig[limb] = {
+        node,
+        baseX: node.rotation.x,
+        baseY: node.rotation.y,
+        baseZ: node.rotation.z
+      };
+    }
+  });
+  return rig;
+}
+
+function animateRunLimbs(phase) {
+  if (!runRig && !boneRig) return;
+  const armSwing = 0.7;
+  const legSwing = 0.9;
+  const bend = 0.18;
+  const applySwing = (limb, amp, sign) => {
+    if (!limb) return false;
+    limb.node.rotation.x = limb.baseX + Math.sin(phase) * amp * sign;
+    limb.node.rotation.z = limb.baseZ + Math.cos(phase) * bend * sign * 0.35;
+    return true;
+  };
+
+  const activeRig = boneRig || runRig;
+  const usedRig =
+    applySwing(activeRig.arm_left, armSwing, 1) ||
+    applySwing(activeRig.arm_right, armSwing, -1) ||
+    applySwing(activeRig.leg_left, legSwing, -1) ||
+    applySwing(activeRig.leg_right, legSwing, 1);
+
+  if (!usedRig && runRig) {
+    for (const part of runRig.fallbackParts) {
+      part.node.rotation.x = part.baseX + Math.sin(phase) * 0.14 * part.side;
+      part.node.rotation.z = part.baseZ + Math.cos(phase * 2) * 0.05 * part.side;
+    }
+  }
+}
+
+function resetRunLimbs() {
+  const restoreRig = rig => {
+    if (!rig) return;
+    for (const key of ['arm_left', 'arm_right', 'leg_left', 'leg_right']) {
+      const limb = rig[key];
+      if (!limb) continue;
+      limb.node.rotation.x = limb.baseX;
+      limb.node.rotation.y = limb.baseY;
+      limb.node.rotation.z = limb.baseZ;
+    }
+  };
+  restoreRig(boneRig);
+  restoreRig(runRig);
+  if (!runRig) return;
+  for (const part of runRig.fallbackParts) {
+    part.node.rotation.x = part.baseX;
+    part.node.rotation.y = part.baseY;
+    part.node.rotation.z = part.baseZ;
+  }
+}
 
 function ensureMenuPreview() {
   const wrap = document.getElementById('playPreviewWrap');
@@ -479,8 +651,8 @@ function ensureMenuPreview() {
   dir.position.set(2.5, 4, 1.5);
   menuPreviewScene.add(dir);
 
-  menuPreviewRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  menuPreviewRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  menuPreviewRenderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
+  menuPreviewRenderer.setPixelRatio(1);
   wrap.appendChild(menuPreviewRenderer.domElement);
   return true;
 }
@@ -495,6 +667,8 @@ async function updateMenuPreview() {
   const w = Math.max(220, wrap.clientWidth || 420);
   const h = Math.max(140, wrap.clientHeight || 220);
   menuPreviewRenderer.setSize(w, h, false);
+  menuPreviewCamera.aspect = w / h;
+  menuPreviewCamera.updateProjectionMatrix();
 
   if (menuPreviewModel) {
     menuPreviewScene.remove(menuPreviewModel);
@@ -502,7 +676,7 @@ async function updateMenuPreview() {
   }
 
   const model = await getModel(save.selectedChar, 2.2);
-  model.rotation.set(0, 0, 0);
+  model.rotation.set(0, getCharacterRotation(save.selectedChar), 0);
   model.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(model);
   model.position.y -= box.min.y; // нижняя точка на y=0
@@ -540,6 +714,61 @@ function updateHud() {
   ui.shopStars.textContent = save.stars;
   ui.shopShields.textContent = save.shields;
   ui.shieldIndicator.classList.toggle('hidden', save.shields <= 0 && !activeShield);
+  updateStatusIndicator();
+}
+
+function updateStatusIndicator() {
+  const statuses = [];
+  if (boostRunning) statuses.push(`⚡ Ускорение: ${Math.max(0, Math.ceil(boostTimer))}с`);
+  if (activeShield) statuses.push(`🛡️ Щит: ${Math.max(0, Math.ceil(shieldTimer))}с`);
+
+  if (statuses.length === 0) {
+    ui.statusIndicator.classList.add('hidden');
+    ui.statusIndicator.textContent = '';
+    return;
+  }
+
+  ui.statusIndicator.textContent = statuses.join(' | ');
+  ui.statusIndicator.classList.remove('hidden');
+}
+
+function activateShield() {
+  if (gameState !== 'playing') return;
+  if (activeShield) return;
+  if (save.shields <= 0) return;
+  save.shields -= 1;
+  activeShield = true;
+  shieldTimer = 10;
+  persist();
+  ui.shieldIndicator.textContent = '🛡️ Щит активен: 10 секунд';
+  ui.shieldIndicator.classList.remove('hidden');
+  updateHud();
+}
+
+function ensureMusic() {
+  if (bgMusic) return;
+  bgMusic = new Audio(PHONK_URL);
+  bgMusic.loop = true;
+  bgMusic.volume = 0.35;
+}
+
+async function playRunMusic() {
+  ensureMusic();
+  if (!bgMusic) return;
+  try {
+    if (!bgMusicReady) {
+      bgMusic.currentTime = 0;
+      bgMusicReady = true;
+    }
+    await bgMusic.play();
+  } catch {
+    // Браузер может заблокировать autoplay без пользовательского действия.
+  }
+}
+
+function stopRunMusic() {
+  if (!bgMusic) return;
+  bgMusic.pause();
 }
 
 function setScreen(name) {
@@ -554,7 +783,10 @@ function setScreen(name) {
 }
 
 function currentSpeed() {
-  return boostRunning ? boostSpeed : baseSpeed;
+  const timeTier = Math.floor(runElapsed / 30);
+  const distanceMultiplier = Math.min(2.5, 1 + timeTier * 0.25); // максимум 2.5x
+  const speed = boostRunning ? boostSpeed : baseSpeed;
+  return speed * distanceMultiplier;
 }
 
 function makeSun() {
@@ -563,6 +795,46 @@ function makeSun() {
   const sun = new THREE.Mesh(sunGeo, sunMat);
   sun.position.set(28, 26, -70);
   scene.add(sun);
+}
+
+function createCloudGroup(x, y, z, scale = 1) {
+  const group = new THREE.Group();
+  const cloudMat = new THREE.MeshLambertMaterial({
+    color: 0xffffff,
+    transparent: true,
+    opacity: 0.9
+  });
+  const puffs = [
+    { x: -1.2, y: 0, z: 0.1, r: 1.0 },
+    { x: -0.2, y: 0.35, z: 0, r: 1.25 },
+    { x: 1.0, y: 0.1, z: -0.05, r: 1.05 },
+    { x: 0.2, y: -0.15, z: 0.15, r: 0.95 }
+  ];
+  for (const puff of puffs) {
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(puff.r, 14, 10), cloudMat);
+    mesh.position.set(puff.x, puff.y, puff.z);
+    group.add(mesh);
+  }
+  group.scale.setScalar(scale);
+  group.position.set(x, y, z);
+  group.userData.baseY = y;
+  group.userData.drift = 0.35 + Math.random() * 0.45;
+  scene.add(group);
+  clouds.push(group);
+}
+
+function createClouds() {
+  clouds.forEach(c => scene.remove(c));
+  clouds.length = 0;
+  for (let i = 0; i < 12; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    createCloudGroup(
+      side * (18 + Math.random() * 36),
+      13 + Math.random() * 7,
+      -i * 62 - Math.random() * 36,
+      1.6 + Math.random() * 1.2
+    );
+  }
 }
 
 function makeSky() {
@@ -592,6 +864,7 @@ function makeSky() {
   });
   scene.add(new THREE.Mesh(skyGeo, skyMat));
   makeSun();
+  createClouds();
 }
 
 function makeLights() {
@@ -626,23 +899,36 @@ async function getModel(key, targetSize = 2) {
 async function createPlayer() {
   if (player) scene.remove(player);
   player = new THREE.Group();
-  const body = await getModel(save.selectedChar, 2.2);
-  player.add(body);
-  player.position.set(0, 0, 0);
+  playerBody = await getModel(save.selectedChar, 2.2);
+  playerBody.rotation.y = getCharacterRotation(save.selectedChar);
+  runRig = buildRunRig(playerBody);
+  boneRig = buildBoneRig(playerBody);
+  player.add(playerBody);
+  player.position.set(0, PLAYER_GROUND_Y + getCharacterHeightOffset(save.selectedChar), 0);
   scene.add(player);
 }
 
 function makeFallbackRoadSegment() {
   const group = new THREE.Group();
+  const roadWidth = laneWidth * 14;
+  const shoulderWidth = roadWidth + 5;
+
+  const shoulder = new THREE.Mesh(
+    new THREE.BoxGeometry(shoulderWidth, 0.2, ROAD_SEGMENT_LENGTH),
+    new THREE.MeshLambertMaterial({ color: 0x4b5563 })
+  );
+  shoulder.position.y = -0.04;
+  group.add(shoulder);
+
   const base = new THREE.Mesh(
-    new THREE.BoxGeometry(laneWidth * 2.9, 0.25, ROAD_SEGMENT_LENGTH),
-    new THREE.MeshLambertMaterial({ color: 0x3b3f4a })
+    new THREE.BoxGeometry(roadWidth, 0.25, ROAD_SEGMENT_LENGTH),
+    new THREE.MeshLambertMaterial({ color: 0x1f2937 })
   );
   group.add(base);
   for (let x = -laneWidth; x <= laneWidth; x += laneWidth) {
     const line = new THREE.Mesh(
-      new THREE.BoxGeometry(0.12, 0.02, 20),
-      new THREE.MeshBasicMaterial({ color: 0xfcd34d })
+      new THREE.BoxGeometry(0.32, 0.02, 26),
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
     );
     line.position.set(x, 0.12, 0);
     group.add(line);
@@ -652,14 +938,16 @@ function makeFallbackRoadSegment() {
 
 async function addRoadSegment(z) {
   const seg = new THREE.Group();
-  let road;
-  try {
-    road = await getModel('road', 24);
-  } catch {
-    road = makeFallbackRoadSegment();
+  let road = makeFallbackRoadSegment();
+  if (!USE_SIMPLE_ROAD) {
+    try {
+      road = await getModel('road', ROAD_MODEL_SIZE);
+    } catch {
+      road = makeFallbackRoadSegment();
+    }
   }
   road.rotation.y = Math.PI;
-  road.position.y = -0.02;
+  road.position.y = -0.28;
   seg.add(road);
   seg.position.z = z;
   scene.add(seg);
@@ -673,13 +961,12 @@ function clearArrayMeshes(arr) {
 
 async function createRoad() {
   clearArrayMeshes(roadSegments);
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 4; i++) {
     await addRoadSegment(-i * ROAD_SEGMENT_LENGTH);
   }
 }
 
-async function spawnTree(side, z) {
-  const key = Math.random() > 0.5 ? 'trees' : 'treeAnim';
+async function spawnTree(side, z, key) {
   let tree;
   try {
     tree = await getModel(key, 3.6 + Math.random());
@@ -692,10 +979,10 @@ async function spawnTree(side, z) {
   const holder = new THREE.Group();
   holder.add(tree);
   holder.rotation.y = Math.PI / 2; // повернуть на 90°
-  holder.position.set(side * (5.5 + Math.random() * 1.2), 0, z);
+  holder.position.set(side * (22 + Math.random() * 3.5), 0, z);
 
-  // Увеличиваем в 8 раз и "ставим" на землю (низ модели y=0)
-  tree.scale.multiplyScalar(8);
+  // Уменьшаем деревья в 2 раза от текущего большого масштаба
+  tree.scale.multiplyScalar(20);
   holder.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(tree);
   tree.position.y -= box.min.y;
@@ -707,10 +994,36 @@ async function spawnTree(side, z) {
 
 async function createTrees() {
   clearArrayMeshes(sideTrees);
-  for (let i = 0; i < 16; i++) {
-    await spawnTree(-1, -i * 14);
-    await spawnTree(1, -i * 14 - 8);
+  for (let i = 0; i < TREE_ROW_COUNT; i++) {
+    const z = -i * TREE_SPACING_Z;
+    const key = Math.random() > 0.5 ? 'trees' : 'treeAnim';
+    // На одном Z используем только один тип дерева.
+    await spawnTree(-1, z, key);
+    await spawnTree(1, z, key);
   }
+}
+
+function isPickupTooCloseToPatternObstacle(lane, pickupZ, pattern, obstacleZ) {
+  const pickupX = laneToX(lane);
+  for (const obs of pattern) {
+    const obstacleX = laneToX(obs.lane);
+    const zDistance = Math.abs(pickupZ - obstacleZ);
+    const xDistance = Math.abs(pickupX - obstacleX);
+    // Не спавним рядом с препятствием в опасном радиусе.
+    if (zDistance < 12 && xDistance < laneWidth * 1.25) return true;
+  }
+  return false;
+}
+
+function isPickupTooCloseToExistingObstacles(lane, pickupZ) {
+  const pickupX = laneToX(lane);
+  for (const obs of obstacles) {
+    if (!obs?.userData || obs.userData.cleared) continue;
+    const zDistance = Math.abs(pickupZ - obs.position.z);
+    const xDistance = Math.abs(pickupX - obs.position.x);
+    if (zDistance < 12 && xDistance < laneWidth * 1.25) return true;
+  }
+  return false;
 }
 
 function laneToX(lane) {
@@ -768,6 +1081,17 @@ async function spawnPickup(kind, lane, z) {
       new THREE.MeshLambertMaterial({ color: kind === 'paw' ? 0xfb7185 : 0xfacc15 })
     );
   }
+  if (kind === 'star') {
+    visual.scale.multiplyScalar(1.35);
+    visual.traverse(node => {
+      if (!node.isMesh) return;
+      const mat = node.material;
+      if (mat && 'emissive' in mat) {
+        mat.emissive.setHex(0xffe066);
+        mat.emissiveIntensity = 2.2;
+      }
+    });
+  }
   visual.position.y = 1.1;
   holder.add(visual);
   holder.position.set(laneToX(lane), 0, z);
@@ -802,19 +1126,33 @@ async function spawnSet() {
     await spawnObstacle(item.type === 'train' ? 'train' : 'small', item.lane, z);
   }
 
-  const freeLanes = [0, 1, 2].filter(lane => !pattern.some(p => p.lane === lane && p.type === 'train'));
+  const freeLanes = [0, 1, 2].filter(lane => !pattern.some(p => p.lane === lane));
   for (const lane of freeLanes) {
-    if (Math.random() < 0.62) await spawnPickup('star', lane, z - 6 - Math.random() * 4);
-    if (Math.random() < 0.14) await spawnPickup('paw', lane, z - 10 - Math.random() * 4);
+    const starZ = z - 13 - Math.random() * 9;
+    const pawZ = z - 18 - Math.random() * 10;
+    if (
+      Math.random() < 0.24 &&
+      !isPickupTooCloseToPatternObstacle(lane, starZ, pattern, z) &&
+      !isPickupTooCloseToExistingObstacles(lane, starZ)
+    ) {
+      await spawnPickup('star', lane, starZ);
+    }
+    if (
+      Math.random() < 0.06 &&
+      !isPickupTooCloseToPatternObstacle(lane, pawZ, pattern, z) &&
+      !isPickupTooCloseToExistingObstacles(lane, pawZ)
+    ) {
+      await spawnPickup('paw', lane, pawZ);
+    }
   }
 }
 
 function resetRunValues() {
   distance = 0;
+  runElapsed = 0;
   continueCount = 0;
   activeShield = false;
-  shieldTapWindow = 0;
-  pendingTapCount = 0;
+  shieldTimer = 0;
   boostRunning = false;
   boostTimer = 0;
   spawnTimer = 0;
@@ -824,6 +1162,7 @@ function resetRunValues() {
   jumpState.active = false;
   jumpState.time = 0;
   obstaclePatternHistory = [];
+  runAnim.phase = 0;
   clearArrayMeshes(obstacles);
   clearArrayMeshes(pickups);
 }
@@ -837,21 +1176,30 @@ function startRun() {
     persist();
   }
   if (player) {
-    player.position.set(0, 0, 0);
+    player.position.set(0, PLAYER_GROUND_Y + getCharacterHeightOffset(save.selectedChar), 0);
     player.rotation.set(0, 0, 0);
   }
+  deathAnim.active = false;
+  deathAnim.time = 0;
   gameState = 'playing';
   setScreen('none');
+  playRunMusic();
   updateHud();
 }
 
 function gameOver() {
+  if (player) {
+    deathAnim.active = true;
+    deathAnim.time = 0;
+    deathAnim.startY = player.position.y;
+  }
   gameState = 'death';
   save.bestDistance = Math.max(save.bestDistance, Math.floor(distance));
   persist();
   ui.deathText.textContent = 'Ты пробежал ' + Math.floor(distance) + ' метров';
   ui.continueCost.textContent = String(continueCount + 1);
   setScreen('death');
+  stopRunMusic();
   updateHud();
 }
 
@@ -861,19 +1209,24 @@ function continueRun() {
   save.paws -= cost;
   continueCount += 1;
   activeShield = false;
-  pendingTapCount = 0;
-  shieldTapWindow = 0;
+  shieldTimer = 0;
   clearArrayMeshes(obstacles);
   clearArrayMeshes(pickups);
   gameState = 'playing';
+  deathAnim.active = false;
+  deathAnim.time = 0;
   setScreen('none');
+  playRunMusic();
   persist();
   updateHud();
 }
 
 function backToMenu() {
   gameState = 'menu';
+  deathAnim.active = false;
+  deathAnim.time = 0;
   setScreen('menu');
+  stopRunMusic();
   updateHud();
 }
 
@@ -881,12 +1234,14 @@ function pauseGame() {
   if (gameState !== 'playing') return;
   gameState = 'paused';
   setScreen('pause');
+  stopRunMusic();
 }
 
 function resumeGame() {
   if (gameState !== 'paused') return;
   gameState = 'playing';
   setScreen('none');
+  playRunMusic();
 }
 
 function moveLeft() {
@@ -906,28 +1261,12 @@ function jump() {
   jumpState.time = 0;
 }
 
-function registerTap() {
-  if (gameState !== 'playing') return;
-  pendingTapCount += 1;
-  shieldTapWindow = 0.32;
-  if (pendingTapCount >= 2) {
-    pendingTapCount = 0;
-    shieldTapWindow = 0;
-    if (!activeShield && save.shields > 0) {
-      save.shields -= 1;
-      activeShield = true;
-      persist();
-      updateHud();
-      ui.shieldIndicator.textContent = '🛡️ Щит активен';
-      ui.shieldIndicator.classList.remove('hidden');
-    }
-  }
-}
-
 function consumeShield() {
   activeShield = false;
-  ui.shieldIndicator.textContent = '🛡️ Двойной тап активирует 1 щит';
+  shieldTimer = 0;
+  ui.shieldIndicator.textContent = '🛡️ Нажми стрелку вниз для активации щита';
   ui.shieldIndicator.classList.toggle('hidden', save.shields <= 0);
+  updateStatusIndicator();
 }
 
 function intersectsObstacle(obs) {
@@ -955,7 +1294,7 @@ function handleCollisions() {
       obs.userData.cleared = true;
       scene.remove(obs);
       if (activeShield) {
-        consumeShield();
+        // Щит расходуется только прыжками (2 прыжка), столкновение просто игнорируется.
       } else {
         gameOver();
         return;
@@ -983,6 +1322,7 @@ function handleCollisions() {
 
 function updateMovement(dt) {
   if (!player) return;
+  if (deathAnim.active) return;
 
   const targetX = laneToX(targetLane);
   currentLaneX += (targetX - currentLaneX) * Math.min(1, dt * 12);
@@ -992,15 +1332,47 @@ function updateMovement(dt) {
   if (jumpState.active) {
     jumpState.time += dt;
     const t = Math.min(1, jumpState.time / jumpState.duration);
-    player.position.y = Math.sin(t * Math.PI) * jumpState.height;
+    const baseY = PLAYER_GROUND_Y + getCharacterHeightOffset(save.selectedChar);
+    player.position.y = baseY + Math.sin(t * Math.PI) * jumpState.height;
+    player.rotation.x = t * Math.PI * 2; // сальто во время прыжка
     if (t >= 1) {
       jumpState.active = false;
-      player.position.y = 0;
+      player.position.y = baseY;
+      player.rotation.x = 0;
     }
+  }
+
+  // Простая процедурная "анимация бега" без вертикального подъема.
+  const runSpeedFactor = THREE.MathUtils.mapLinear(currentSpeed(), baseSpeed, boostSpeed, 1, 1.8);
+  runAnim.phase += dt * 11 * runSpeedFactor;
+  if (jumpState.active) {
+    player.rotation.z = 0;
+    player.rotation.y = 0;
+    resetRunLimbs();
+  } else {
+    player.rotation.x = 0;
+    player.rotation.z = Math.sin(runAnim.phase * 2) * runAnim.tiltAmp;
+    player.rotation.y = Math.sin(runAnim.phase) * runAnim.swayAmp;
+    animateRunLimbs(runAnim.phase);
+  }
+}
+
+function updateDeathAnimation(dt) {
+  if (!player || !deathAnim.active) return;
+  deathAnim.time += dt;
+  const t = Math.min(1, deathAnim.time / deathAnim.duration);
+  const eased = 1 - Math.pow(1 - t, 3);
+  player.rotation.x = -eased * Math.PI * 0.52;
+  player.rotation.z = Math.sin(eased * Math.PI) * 0.1;
+  player.position.y = deathAnim.startY - eased * 0.5;
+  if (t >= 1) {
+    deathAnim.active = false;
+    resetRunLimbs();
   }
 }
 
 function updateWorld(dt) {
+  runElapsed += dt;
   const speed = currentSpeed();
   distance += dt * speed;
   save.bestDistance = Math.max(save.bestDistance, Math.floor(distance));
@@ -1017,7 +1389,14 @@ function updateWorld(dt) {
 
   for (const tree of sideTrees) {
     tree.position.z += dt * speed;
-    if (tree.position.z > 20) tree.position.z -= 220;
+    if (tree.position.z > 20) tree.position.z -= TREE_LOOP_LENGTH;
+  }
+
+  for (let i = 0; i < clouds.length; i++) {
+    const cloud = clouds[i];
+    cloud.position.z += dt * speed * 0.24;
+    cloud.position.y = cloud.userData.baseY + Math.sin(runElapsed * cloud.userData.drift + i) * 0.25;
+    if (cloud.position.z > 35) cloud.position.z -= CLOUD_LOOP_LENGTH;
   }
 
   for (const obs of obstacles) {
@@ -1046,12 +1425,16 @@ function updateWorld(dt) {
     spawnSet();
   }
 
-  if (shieldTapWindow > 0) {
-    shieldTapWindow -= dt;
-    if (shieldTapWindow <= 0) pendingTapCount = 0;
+  if (activeShield) {
+    shieldTimer -= dt;
+    if (shieldTimer <= 0) consumeShield();
   }
 
-  updateHud();
+  hudUpdateTimer += dt;
+  if (hudUpdateTimer >= 0.12) {
+    hudUpdateTimer = 0;
+    updateHud();
+  }
 }
 
 function renderCharacterCards() {
@@ -1213,23 +1596,20 @@ function setupEvents() {
       return;
     }
     if (!touchMoved || (Math.abs(dx) < 10 && Math.abs(dy) < 10)) {
-      registerTap();
+      // одиночный тап больше не активирует щит
     }
   }, { passive: true });
 
-  let lastClickAt = 0;
   document.addEventListener('click', e => {
     if (gameState !== 'playing') return;
     if (e.target.closest('button')) return;
-    const now = performance.now();
-    if (now - lastClickAt < 320) registerTap();
-    lastClickAt = now;
   });
 
   document.addEventListener('keydown', e => {
     if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') moveLeft();
     if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') moveRight();
     if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') jump();
+    if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') activateShield();
     if (e.key === 'Escape') {
       if (gameState === 'playing') pauseGame();
       else if (gameState === 'paused') resumeGame();
@@ -1244,8 +1624,14 @@ function setupEvents() {
     // подстроить превью выбранного персонажа
     const wrap = document.getElementById('playPreviewWrap');
     if (menuPreviewRenderer && wrap) {
-      menuPreviewRenderer.setSize(Math.max(1, wrap.clientWidth), Math.max(1, wrap.clientHeight), false);
-      if (menuPreviewScene && menuPreviewCamera) menuPreviewRenderer.render(menuPreviewScene, menuPreviewCamera);
+      const previewW = Math.max(1, wrap.clientWidth);
+      const previewH = Math.max(1, wrap.clientHeight);
+      menuPreviewRenderer.setSize(previewW, previewH, false);
+      if (menuPreviewScene && menuPreviewCamera) {
+        menuPreviewCamera.aspect = previewW / previewH;
+        menuPreviewCamera.updateProjectionMatrix();
+        menuPreviewRenderer.render(menuPreviewScene, menuPreviewCamera);
+      }
     }
   });
 }
@@ -1267,6 +1653,8 @@ function animate(time = 0) {
     updateMovement(dt);
     updateWorld(dt);
     handleCollisions();
+  } else if (gameState === 'death') {
+    updateDeathAnimation(dt);
   }
 
   animateCamera();
@@ -1275,8 +1663,8 @@ function animate(time = 0) {
 
 async function init() {
   const canvas = document.getElementById('game');
-  renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(1);
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.setClearColor(0x93d5ff);
